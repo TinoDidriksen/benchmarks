@@ -28,7 +28,7 @@
 #include <vector>
 #include <iomanip>
 
-inline void PrintStats(std::vector<double> timings) {
+inline double PrintStats(std::vector<double> timings) {
     double fastest = std::numeric_limits<double>::max();
 
     std::cout << std::fixed << std::setprecision(2);
@@ -55,14 +55,15 @@ inline void PrintStats(std::vector<double> timings) {
     double sdv = sqrt(var);
 
     std::cout << " with fastest " << fastest << ", average " << avg << ", stddev " << sdv;
+    return fastest;
 }
 
 
 inline size_t checkvalue(uint32_t t) {
-	return t;
+    return t;
 }
 inline size_t checkvalue(const std::string& t) {
-	return t.length();
+    return t.length();
 }
 
 #endif

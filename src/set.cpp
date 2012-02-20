@@ -42,7 +42,7 @@
 #include <sorted_deque.hpp>
 #include <cycle.h>
 #ifdef _MSC_VER
-	#include <sti/sset.h>
+    #include <sti/sset.h>
 #endif
 
 const size_t N = 1000000;
@@ -50,7 +50,7 @@ const size_t R = 7;
 
 template<typename Cont, typename VT>
 void runTest(const std::string& name, const VT& values) {
-	std::cout << "Testing " << name << " ..." << std::endl;
+    std::cout << "Testing " << name << " ..." << std::endl;
 
     std::vector< std::vector<double> > timings(4);
 
@@ -101,20 +101,22 @@ void runTest(const std::string& name, const VT& values) {
     }
 
     std::cout << name << " insertion: ";
-    PrintStats(timings[0]);
+    timings[0][0] = PrintStats(timings[0]);
     std::cout << std::endl;
 
     std::cout << name << " lookup: ";
-    PrintStats(timings[1]);
+    timings[1][0] = PrintStats(timings[1]);
     std::cout << std::endl;
 
     std::cout << name << " iterate: ";
-    PrintStats(timings[2]);
+    timings[2][0] = PrintStats(timings[2]);
     std::cout << std::endl;
 
     std::cout << name << " erase: ";
-    PrintStats(timings[3]);
+    timings[3][0] = PrintStats(timings[3]);
     std::cout << std::endl;
+
+    std::cout << name << "\t" << timings[0][0] << "\t" << timings[1][0] << "\t" << timings[2][0] << "\t" << timings[3][0] << std::endl;
 
     std::cout << std::endl;
 }
@@ -135,23 +137,25 @@ int main() {
         numbers.push_back(rnd);
     }
 
-    runTest< std::set<uint32_t> >("std::set<uint32_t>", numbers);
-    runTest< std::unordered_set<uint32_t> >("std::unordered_set<uint32_t>", numbers);
-    runTest< boost::unordered_set<uint32_t> >("boost::unordered_set<uint32_t>", numbers);
-    runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector<uint32_t>", numbers);
-    runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector<uint32_t>", numbers);
-    runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque<uint32_t>", numbers);
+    std::cout << "<uint32_t>\tInsert\tLookup\tIterate\tErase" << std::endl;
+    runTest< std::set<uint32_t> >("std::set", numbers);
+    runTest< std::unordered_set<uint32_t> >("std::unordered_set", numbers);
+    runTest< boost::unordered_set<uint32_t> >("boost::unordered_set", numbers);
+    runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector", numbers);
+    runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector", numbers);
+    runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque", numbers);
 #ifdef _MSC_VER
-    runTest< sti::sset<uint32_t> >("sti::sset<uint32_t>", numbers);
+    runTest< sti::sset<uint32_t> >("sti::sset", numbers);
 #endif
 
-	runTest< std::set<std::string> >("std::set<std::string>", strings);
-    runTest< std::unordered_set<std::string> >("std::unordered_set<std::string>", strings);
-    runTest< boost::unordered_set<std::string> >("boost::unordered_set<std::string>", strings);
-    //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector<std::string>", strings); // only makes sense for integers
-    runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector<std::string>", strings);
-    runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque<std::string>", strings);
+    std::cout << "<std::string>\tInsert\tLookup\tIterate\tErase" << std::endl;
+    runTest< std::set<std::string> >("std::set", strings);
+    runTest< std::unordered_set<std::string> >("std::unordered_set", strings);
+    runTest< boost::unordered_set<std::string> >("boost::unordered_set", strings);
+    //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector", strings); // only makes sense for integers
+    runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector", strings);
+    runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
 #ifdef _MSC_VER
-    runTest< sti::sset<std::string> >("sti::sset<std::string>", strings);
+    runTest< sti::sset<std::string> >("sti::sset", strings);
 #endif
 }
