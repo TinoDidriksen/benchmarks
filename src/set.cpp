@@ -1,0 +1,157 @@
+/*
+* Copyright (C) 2012, Tino Didriksen Consult
+* Developed by Tino Didriksen <tino@didriksen.cc>
+*
+* This file is part of Benchmarks
+*
+* Benchmarks is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Benchmarks is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Benchmarks.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifdef _MSC_VER
+    #define _SECURE_SCL 0
+    #define _CRT_SECURE_NO_DEPRECATE 1
+    #define WIN32_LEAN_AND_MEAN
+    #define VC_EXTRALEAN
+    #define NOMINMAX
+#endif
+
+#include <cstdlib>
+#include <cstdint>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <helpers.hpp>
+
+#include <set>
+#include <boost/unordered_set.hpp>
+#include <unordered_set>
+#include <sorted_vector.hpp>
+#include <interval_vector.hpp>
+#include <sorted_deque.hpp>
+#include <cycle.h>
+#ifdef _MSC_VER
+	#include <sti/sset.h>
+#endif
+
+const size_t N = 1000000;
+const size_t R = 7;
+
+template<typename Cont, typename VT>
+void runTest(const std::string& name, const VT& values) {
+	std::cout << "Testing " << name << " ..." << std::endl;
+
+    std::vector< std::vector<double> > timings(4);
+
+    for (size_t r=0 ; r<R ; ++r) {
+        Cont Set;
+        ticks start, end;
+        double timed = 0.0;
+        size_t res = 0;
+
+        start = getticks();
+        for (size_t i=0 ; i<N ; ++i) {
+            Set.insert(values[i]);
+        }
+        end = getticks();
+        timed = elapsed(end, start);
+        timings[0].push_back(timed);
+
+        res = 0;
+        start = getticks();
+        for (size_t i=0 ; i<N ; ++i) {
+            typename Cont::const_iterator it = Set.find(values[i]);
+            if (it != Set.end()) {
+                res += checkvalue(*it);
+            }
+        }
+        end = getticks();
+        timed = elapsed(end, start);
+        timings[1].push_back(timed);
+        std::cerr << res << std::endl;
+
+        res = 0;
+        start = getticks();
+        for (typename Cont::const_iterator it = Set.begin(); it != Set.end() ; ++it) {
+            res += checkvalue(*it);
+        }
+        end = getticks();
+        timed = elapsed(end, start);
+        timings[2].push_back(timed);
+        std::cerr << res << std::endl;
+
+        start = getticks();
+        for (size_t i=0 ; i<N ; ++i) {
+            Set.erase(values[i]);
+        }
+        end = getticks();
+        timed = elapsed(end, start);
+        timings[3].push_back(timed);
+    }
+
+    std::cout << name << " insertion: ";
+    PrintStats(timings[0]);
+    std::cout << std::endl;
+
+    std::cout << name << " lookup: ";
+    PrintStats(timings[1]);
+    std::cout << std::endl;
+
+    std::cout << name << " iterate: ";
+    PrintStats(timings[2]);
+    std::cout << std::endl;
+
+    std::cout << name << " erase: ";
+    PrintStats(timings[3]);
+    std::cout << std::endl;
+
+    std::cout << std::endl;
+}
+
+int main() {
+    srand(902200987);
+    std::vector<uint32_t> numbers;
+    std::vector<std::string> strings;
+    std::ostringstream ss;
+    std::string tmp;
+    for (size_t i=0 ; i<N ; ++i) {
+        tmp.clear();
+        ss.clear();
+        ss.str("");
+        int rnd = rand() & 0x00003FFF;
+        ss << rnd;
+        strings.push_back(ss.str());
+        numbers.push_back(rnd);
+    }
+
+    runTest< std::set<uint32_t> >("std::set<uint32_t>", numbers);
+    runTest< std::unordered_set<uint32_t> >("std::unordered_set<uint32_t>", numbers);
+    runTest< boost::unordered_set<uint32_t> >("boost::unordered_set<uint32_t>", numbers);
+    runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector<uint32_t>", numbers);
+    runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector<uint32_t>", numbers);
+    runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque<uint32_t>", numbers);
+#ifdef _MSC_VER
+    runTest< sti::sset<uint32_t> >("sti::sset<uint32_t>", numbers);
+#endif
+
+	runTest< std::set<std::string> >("std::set<std::string>", strings);
+    runTest< std::unordered_set<std::string> >("std::unordered_set<std::string>", strings);
+    runTest< boost::unordered_set<std::string> >("boost::unordered_set<std::string>", strings);
+    //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector<std::string>", strings); // only makes sense for integers
+    runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector<std::string>", strings);
+    runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque<std::string>", strings);
+#ifdef _MSC_VER
+    runTest< sti::sset<std::string> >("sti::sset<std::string>", strings);
+#endif
+}
