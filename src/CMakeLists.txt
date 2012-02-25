@@ -29,3 +29,5 @@ endmacro()
 
 ADD_EXECUTABLE(s-set set.cpp)
 benchmarks_link(s-set)
+ADD_EXECUTABLE(vector-realloc vector-realloc.cpp)
+benchmarks_link(vector-realloc)
