@@ -1,5 +1,5 @@
 /*
-* Copyright 2010 Tino Didriksen <tino@didriksen.cc>
+* Copyright 2012 Tino Didriksen <tino@didriksen.cc>
 * http://tinodidriksen.com/
 */
 
@@ -21,6 +21,7 @@ References:
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <limits>
 
 namespace tdc {
 
@@ -82,16 +83,15 @@ private:
 		friend class trie;
 
 		typedef trie_node node_type;
-		typedef std::vector<std::pair<typename String::value_type, node_type*> > children_type;
+		typedef std::vector<std::pair<typename String::value_type, size_t> > children_type;
 		typedef std::vector<const node_type*> query_path_type;
 		typedef std::map<String,size_t> query_type;
 		typedef trie root_type;
 
 		bool terminal;
 		typename String::value_type self;
-		size_t number;
 		size_t children_depth;
-		node_type *parent;
+		size_t parent;
 		children_type children;
 
 		void buildString(const query_path_type& qp, String& in) const {
@@ -103,61 +103,65 @@ private:
 
 	public:
 
-		trie_node(root_type *root, node_type *parent, const String& entry, size_t pos=0, size_t depth=0) :
+		trie_node() :
+		parent(std::numeric_limits<size_t>::max())
+		{
+		}
+
+		trie_node(size_t parent, typename String::value_type self) :
 		terminal(false),
-		self(entry.at(pos)),
-		number(0),
+		self(self),
 		children_depth(0),
 		parent(parent)
 		{
-			root->trackNode(this);
-			add(root, entry, pos+1, depth+1);
 		}
 
-		~trie_node() {
-		}
-
-		bool add(root_type *root, const String& entry, size_t pos=0, size_t depth=0) {
+		bool add(root_type& root, const String& entry, size_t pos=0, size_t depth=0) {
 			if (pos < entry.size()) {
 				typename children_type::iterator child = findchild(children, entry[pos]);
 				if (child != children.end()) {
-					node_type *node = child->second;
-					return node->add(root, entry, pos+1, depth+1);
+					node_type& node = root.nodes[child->second];
+					return node.add(root, entry, pos+1, depth+1);
 				}
 				else {
-					insertchild(children, std::make_pair(entry[pos], new node_type(root, this, entry, pos, depth)));
+					size_t p = this - &root.nodes[0];
+					size_t z = root.nodes.size();
+					insertchild(children, std::make_pair(entry[pos], z));
+					root.nodes.resize(z+1);
+					root.nodes.back() = node_type(p, entry[pos]);
+					root.nodes.back().add(root, entry, pos+1, depth+1);
 					return true;
 				}
 			}
 			else {
 				if (!terminal) {
 					terminal = true;
-					updateChildrenDepth();
+					updateChildrenDepth(root);
 					return true;
 				}
 			}
 			return false;
 		}
 
-		void query(const String& entry, size_t pos, query_type& collected, query_path_type& qp, size_t maxdist=0, size_t curdist=0, size_t depth=0) const {
+		void query(const root_type& root, const String& entry, size_t pos, query_type& collected, query_path_type& qp, size_t maxdist=0, size_t curdist=0, size_t depth=0) const {
 			qp.push_back(this);
 
 			if (pos < entry.size()) {
 				typename children_type::const_iterator child = findchild(children, entry[pos]);
 				if (child != children.end()) {
-					child->second->query(entry, pos+1, collected, qp, maxdist, curdist, depth+1);
+					root.nodes[child->second].query(root, entry, pos+1, collected, qp, maxdist, curdist, depth+1);
 				}
 			}
 
 			if (curdist < maxdist) {
 				for (typename children_type::const_iterator child = children.begin() ; child != children.end() ; ++child) {
 					if (pos >= entry.size() || child->first != entry[pos]) {
-						child->second->query(entry, pos, collected, qp, maxdist, curdist+1, depth+1);
-						child->second->query(entry, pos+1, collected, qp, maxdist, curdist+1, depth+1);
+						root.nodes[child->second].query(root, entry, pos, collected, qp, maxdist, curdist+1, depth+1);
+						root.nodes[child->second].query(root, entry, pos+1, collected, qp, maxdist, curdist+1, depth+1);
 					}
 					for (size_t i = 1 ; pos+i < entry.size() ; ++i) {
 						if (child->first == entry[pos+i]) {
-							child->second->query(entry, pos+i+1, collected, qp, maxdist, curdist+i, depth+1);
+							root.nodes[child->second].query(root, entry, pos+i+1, collected, qp, maxdist, curdist+i, depth+1);
 						}
 					}
 				}
@@ -183,10 +187,10 @@ private:
 		}
 
 	private:
-		void updateChildrenDepth(size_t depth=0) {
+		void updateChildrenDepth(root_type& root, size_t depth=0) {
 			children_depth = std::max(children_depth, depth);
-			if (parent) {
-				parent->updateChildrenDepth(depth+1);
+			if (parent != std::numeric_limits<size_t>::max()) {
+				root.nodes[parent].updateChildrenDepth(root, depth+1);
 			}
 		}
 
@@ -218,8 +222,8 @@ private:
 	friend class trie_node;
 
 	typedef trie_node node_type;
-	typedef std::vector<node_type*> node_container_type;
-	typedef std::vector<std::pair<typename String::value_type, node_type*> > children_type;
+	typedef std::vector<node_type> node_container_type;
+	typedef std::vector<std::pair<typename String::value_type, size_t> > children_type;
 	typedef std::vector<const node_type*> query_path_type;
 
 	Serializer serializer;
@@ -233,12 +237,7 @@ public:
 	trie() : compressed(false) {
 	}
 
-	~trie() {
-		for (typename node_container_type::iterator node = nodes.begin() ; node != nodes.end() ; ++node) {
-			delete *node;
-		}
-	}
-
+	/*
 	void serialize(std::ostream& out) const {
 		out.write(reinterpret_cast<const char*>(&compressed), sizeof(compressed));
 
@@ -267,6 +266,7 @@ public:
 			out.write(reinterpret_cast<const char*>(&value), sizeof(value));
 		}
 	}
+	//*/
 
 	bool is_compressed() const {
 		return compressed;
@@ -285,12 +285,14 @@ public:
 		}
 		typename children_type::iterator child = findchild(children, entry[0]);
 		if (child != children.end()) {
-			node_type *node = child->second;
-			return node->add(this, entry, 1, 1);
+			node_type& node = nodes[child->second];
+			return node.add(*this, entry, 1, 1);
 		}
-		else {
-			insertchild(children, std::make_pair(entry[0], new node_type(this, 0, entry)));
-		}
+		size_t z = nodes.size();
+		insertchild(children, std::make_pair(entry[0], z));
+		nodes.resize(z+1);
+		nodes.back() = node_type(std::numeric_limits<size_t>::max(), entry[0]);
+		nodes.back().add(*this, entry, 1, 1);
 		return true;
 	}
 
@@ -302,17 +304,17 @@ public:
 
 			typename children_type::const_iterator child = findchild(children, entry[0]);
 			if (child != children.end()) {
-				child->second->query(entry, 1, matches, qp, maxdist);
+				nodes[child->second].query(*this, entry, 1, matches, qp, maxdist);
 			}
 			if (maxdist) {
 				for (typename children_type::const_iterator child = children.begin() ; child != children.end() ; ++child) {
 					if (child->first != entry[0]) {
-						child->second->query(entry, 0, matches, qp, maxdist, 1);
-						child->second->query(entry, 1, matches, qp, maxdist, 1);
+						nodes[child->second].query(*this, entry, 0, matches, qp, maxdist, 1);
+						nodes[child->second].query(*this, entry, 1, matches, qp, maxdist, 1);
 					}
 					for (size_t i = 1 ; i < entry.size() ; ++i) {
 						if (child->first == entry[i]) {
-							child->second->query(entry, i+1, matches, qp, maxdist, i);
+							nodes[child->second].query(*this, entry, i+1, matches, qp, maxdist, i);
 						}
 					}
 				}
@@ -321,6 +323,7 @@ public:
 		return matches;
 	}
 
+	/*
 	void compress() {
 		if (compressed) {
 			return;
@@ -400,12 +403,7 @@ public:
 		nodes = tosave;
 		std::cerr << std::endl;
 	}
-
-private:
-	void trackNode(node_type *node) {
-		node->number = nodes.size();
-		nodes.push_back(node);
-	}
+	//*/
 };
 
 }
