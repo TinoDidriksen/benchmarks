@@ -74,7 +74,7 @@ void insertchild(T& t, const Y& y) {
 	t.insert(it, y);
 }
 
-template<typename String, typename Serializer=trie_serializer<typename String::value_type> >
+template<typename String, typename Count=uint32_t, typename Serializer=trie_serializer<typename String::value_type> >
 class trie {
 private:
 
@@ -83,7 +83,7 @@ private:
 		friend class trie;
 
 		typedef trie_node node_type;
-		typedef std::vector<std::pair<typename String::value_type, size_t> > children_type;
+		typedef std::vector<std::pair<typename String::value_type, Count> > children_type;
 		typedef std::vector<const node_type*> query_path_type;
 		typedef std::map<String,size_t> query_type;
 		typedef trie root_type;
@@ -91,7 +91,7 @@ private:
 		bool terminal;
 		typename String::value_type self;
 		size_t children_depth;
-		size_t parent;
+		Count parent;
 		children_type children;
 
 		void buildString(const query_path_type& qp, String& in) const {
@@ -104,11 +104,11 @@ private:
 	public:
 
 		trie_node() :
-		parent(std::numeric_limits<size_t>::max())
+		parent(std::numeric_limits<Count>::max())
 		{
 		}
 
-		trie_node(size_t parent, typename String::value_type self) :
+		trie_node(Count parent, typename String::value_type self) :
 		terminal(false),
 		self(self),
 		children_depth(0),
@@ -124,8 +124,8 @@ private:
 					return node.add(root, entry, pos+1, depth+1);
 				}
 				else {
-					size_t p = this - &root.nodes[0];
-					size_t z = root.nodes.size();
+					Count p = static_cast<Count>(this - &root.nodes[0]);
+					Count z = static_cast<Count>(root.nodes.size());
 					insertchild(children, std::make_pair(entry[pos], z));
 					root.nodes.resize(z+1);
 					root.nodes.back() = node_type(p, entry[pos]);
@@ -189,7 +189,7 @@ private:
 	private:
 		void updateChildrenDepth(root_type& root, size_t depth=0) {
 			children_depth = std::max(children_depth, depth);
-			if (parent != std::numeric_limits<size_t>::max()) {
+			if (parent != std::numeric_limits<Count>::max()) {
 				root.nodes[parent].updateChildrenDepth(root, depth+1);
 			}
 		}
@@ -223,7 +223,7 @@ private:
 
 	typedef trie_node node_type;
 	typedef std::vector<node_type> node_container_type;
-	typedef std::vector<std::pair<typename String::value_type, size_t> > children_type;
+	typedef std::vector<std::pair<typename String::value_type, Count> > children_type;
 	typedef std::vector<const node_type*> query_path_type;
 
 	Serializer serializer;
@@ -235,12 +235,14 @@ public:
 	typedef std::map<String,size_t> query_type;
 
 	trie() : compressed(false) {
-		nodes.reserve(1500000);
 	}
 
 	void serialize(std::ostream& out) const {
 		const char *trie = "TRIE";
 		out.write(trie, 4);
+		size_t z = sizeof(typename String::value_type);
+		out.write(reinterpret_cast<const char*>(&z), sizeof(z));
+
 		out.write(reinterpret_cast<const char*>(&compressed), sizeof(compressed));
 
 		size_t value = nodes.size();
@@ -269,15 +271,22 @@ public:
 	}
 
 	void unserialize(std::istream& in) {
+		clear();
+
 		std::string trie(4,0);
 		in.read(&trie[0], 4);
 		if (trie != "TRIE") {
 			throw -1;
 		}
 
+		size_t z;
+		in.read(reinterpret_cast<char*>(&z), sizeof(z));
+		if (z != sizeof(typename String::value_type)) {
+			throw -1;
+		}
+
 		in.read(reinterpret_cast<char*>(&compressed), sizeof(compressed));
 
-		size_t z;
 		in.read(reinterpret_cast<char*>(&z), sizeof(z));
 		nodes.resize(z);
 		for (size_t n=0 ; n<z ; ++n) {
@@ -333,10 +342,10 @@ public:
 			node_type& node = nodes[child->second];
 			return node.add(*this, entry, 1, 1);
 		}
-		size_t z = nodes.size();
+		Count z = static_cast<Count>(nodes.size());
 		insertchild(children, std::make_pair(entry[0], z));
 		nodes.resize(z+1);
-		nodes.back() = node_type(std::numeric_limits<size_t>::max(), entry[0]);
+		nodes.back() = node_type(std::numeric_limits<Count>::max(), entry[0]);
 		nodes.back().add(*this, entry, 1, 1);
 		return true;
 	}
@@ -404,13 +413,13 @@ public:
 					if (first->self != second->self) {
 						break;
 					}
-					if (second->parent == std::numeric_limits<size_t>::max() || !first->equals(*this, second)) {
+					if (second->parent == std::numeric_limits<Count>::max() || !first->equals(*this, second)) {
 						++inode;
 						continue;
 					}
 
 					findchild(nodes[second->parent].children, first->self)->second = first - &nodes[0];
-					second->parent = std::numeric_limits<size_t>::max();
+					second->parent = std::numeric_limits<Count>::max();
 					second->self = typename String::value_type();
 					second->children.clear();
 					second->children_depth = 0;
@@ -431,12 +440,12 @@ public:
 		}
 
 		std::map<size_t,size_t> oldnew;
-		oldnew[std::numeric_limits<size_t>::max()] = std::numeric_limits<size_t>::max();
+		oldnew[std::numeric_limits<Count>::max()] = std::numeric_limits<Count>::max();
 		node_container_type tosave;
 		tosave.reserve(nodes.size()-removed);
 
 		for (size_t i=0 ; i<nodes.size() ; ++i) {
-			if (nodes[i].parent != std::numeric_limits<size_t>::max() || nodes[i].self != typename String::value_type()
+			if (nodes[i].parent != std::numeric_limits<Count>::max() || nodes[i].self != typename String::value_type()
 				|| nodes[i].children.size() != 0 || nodes[i].children_depth != 0) {
 				oldnew[i] = tosave.size();
 				tosave.push_back(nodes[i]);
