@@ -194,7 +194,7 @@ private:
 			}
 		}
 
-		bool equals(const node_type* second) const {
+		bool equals(const root_type& root, const node_type* second) const {
 			if (self != second->self) {
 				return false;
 			}
@@ -209,9 +209,9 @@ private:
 			}
 			for (typename children_type::const_iterator mine = children.begin(), other = second->children.begin()
 				; mine != children.end() && other != second->children.end() ; ++mine, ++other) {
-				const node_type *nmine = mine->second;
-				const node_type *nother = other->second;
-				if (!nmine->equals(nother)) {
+				const node_type *nmine = &root.nodes[mine->second];
+				const node_type *nother = &root.nodes[other->second];
+				if (!nmine->equals(root, nother)) {
 					return false;
 				}
 			}
@@ -235,38 +235,77 @@ public:
 	typedef std::map<String,size_t> query_type;
 
 	trie() : compressed(false) {
+		nodes.reserve(1500000);
 	}
 
-	/*
 	void serialize(std::ostream& out) const {
+		const char *trie = "TRIE";
+		out.write(trie, 4);
 		out.write(reinterpret_cast<const char*>(&compressed), sizeof(compressed));
 
 		size_t value = nodes.size();
 		out.write(reinterpret_cast<const char*>(&value), sizeof(value));
-		for (typename node_container_type::const_iterator node = nodes.begin() ; node != nodes.end() ; ++node) {
-			out.write(reinterpret_cast<const char*>(&(*node)->terminal), sizeof((*node)->terminal));
-			serializer.serialize(out, (*node)->self);
+		for (size_t n=0 ; n<nodes.size() ; ++n) {
+			serializer.serialize(out, nodes[n].self);
 		}
-
-		for (typename node_container_type::const_iterator node = nodes.begin() ; node != nodes.end() ; ++node) {
-			size_t value = (*node)->children.size();
+		for (size_t n=0 ; n<nodes.size() ; ++n) {
+			out.write(reinterpret_cast<const char*>(&nodes[n].terminal), sizeof(nodes[n].terminal));
+		}
+		for (size_t n=0 ; n<nodes.size() ; ++n) {
+			size_t value = nodes[n].children.size();
 			out.write(reinterpret_cast<const char*>(&value), sizeof(value));
-			for (typename children_type::const_iterator child = (*node)->children.begin() ; child != (*node)->children.end() ; ++child) {
-				const node_type *node = child->second;
-				value = node->number;
-				out.write(reinterpret_cast<const char*>(&value), sizeof(value));
+		}
+		for (size_t n=0 ; n<nodes.size() ; ++n) {
+			for (size_t c=0 ; c<nodes[n].children.size() ; ++c) {
+				out.write(reinterpret_cast<const char*>(&nodes[n].children[c].second), sizeof(nodes[n].children[c].second));
 			}
 		}
 
 		value = children.size();
 		out.write(reinterpret_cast<const char*>(&value), sizeof(value));
-		for (typename children_type::const_iterator child = children.begin() ; child != children.end() ; ++child) {
-			const node_type *node = child->second;
-			value = node->number;
-			out.write(reinterpret_cast<const char*>(&value), sizeof(value));
+		for (size_t c=0 ; c<children.size() ; ++c) {
+			out.write(reinterpret_cast<const char*>(&children[c].second), sizeof(children[c].second));
 		}
 	}
-	//*/
+
+	void unserialize(std::istream& in) {
+		std::string trie(4,0);
+		in.read(&trie[0], 4);
+		if (trie != "TRIE") {
+			throw -1;
+		}
+
+		in.read(reinterpret_cast<char*>(&compressed), sizeof(compressed));
+
+		size_t z;
+		in.read(reinterpret_cast<char*>(&z), sizeof(z));
+		nodes.resize(z);
+		for (size_t n=0 ; n<z ; ++n) {
+			nodes[n].self = serializer.unserialize(in);
+		}
+		for (size_t n=0 ; n<z ; ++n) {
+			in.read(reinterpret_cast<char*>(&nodes[n].terminal), sizeof(nodes[n].terminal));
+		}
+		for (size_t n=0 ; n<z ; ++n) {
+			size_t c;
+			in.read(reinterpret_cast<char*>(&c), sizeof(c));
+			nodes[n].children.resize(c);
+		}
+		for (size_t n=0 ; n<z ; ++n) {
+			for (size_t c=0 ; c<nodes[n].children.size() ; ++c) {
+				in.read(reinterpret_cast<char*>(&nodes[n].children[c].second), sizeof(nodes[n].children[c].second));
+				nodes[n].children[c].first = nodes[nodes[n].children[c].second].self;
+				nodes[nodes[n].children[c].second].parent = n;
+			}
+		}
+
+		in.read(reinterpret_cast<char*>(&z), sizeof(z));
+		children.resize(z);
+		for (size_t c=0 ; c<children.size() ; ++c) {
+			in.read(reinterpret_cast<char*>(&children[c].second), sizeof(children[c].second));
+			children[c].first = nodes[children[c].second].self;
+		}
+	}
 
 	bool is_compressed() const {
 		return compressed;
@@ -274,6 +313,12 @@ public:
 
 	size_t size() const {
 		return nodes.size();
+	}
+
+	void clear() {
+		compressed = false;
+		nodes.clear();
+		children.clear();
 	}
 
 	bool add(const String& entry) {
@@ -323,7 +368,6 @@ public:
 		return matches;
 	}
 
-	/*
 	void compress() {
 		if (compressed) {
 			return;
@@ -333,9 +377,8 @@ public:
 		typedef std::map<size_t,multichild_type> depths_type;
 		depths_type depths;
 
-		for (typename node_container_type::iterator it = nodes.begin() ; it != nodes.end() ; ++it) {
-			node_type *node = *it;
-			depths[node->children_depth].insert(std::make_pair(node->self, node));
+		for (size_t i=0 ; i<nodes.size() ; ++i) {
+			depths[nodes[i].children_depth].insert(std::make_pair(nodes[i].self, &nodes[i]));
 		}
 
 		std::cerr << "Compressing " << nodes.size() << " nodes..." << std::endl;
@@ -361,19 +404,17 @@ public:
 					if (first->self != second->self) {
 						break;
 					}
-					if (!second->parent || !first->equals(second)) {
+					if (second->parent == std::numeric_limits<size_t>::max() || !first->equals(*this, second)) {
 						++inode;
 						continue;
 					}
 
-					findchild(second->parent->children, first->self)->second = first;
-					second->parent = 0;
+					findchild(nodes[second->parent].children, first->self)->second = first - &nodes[0];
+					second->parent = std::numeric_limits<size_t>::max();
 					second->self = typename String::value_type();
 					second->children.clear();
 					second->children_depth = 0;
-					typename multichild_type::iterator die = inode;
-					++inode;
-					mchild.erase(die);
+					mchild.erase(inode++);
 					did_compress = true;
 					++removed;
 				}
@@ -389,21 +430,31 @@ public:
 			}
 		}
 
+		std::map<size_t,size_t> oldnew;
+		oldnew[std::numeric_limits<size_t>::max()] = std::numeric_limits<size_t>::max();
 		node_container_type tosave;
-		for (typename node_container_type::iterator it = nodes.begin() ; it != nodes.end() ; ++it) {
-			node_type *node = *it;
-			if (node->parent == 0 && node->self == typename String::value_type() && node->children.size() == 0 && node->children_depth == 0) {
-				delete node;
-			}
-			else {
-				node->number = tosave.size();
-				tosave.push_back(node);
+		tosave.reserve(nodes.size()-removed);
+
+		for (size_t i=0 ; i<nodes.size() ; ++i) {
+			if (nodes[i].parent != std::numeric_limits<size_t>::max() || nodes[i].self != typename String::value_type()
+				|| nodes[i].children.size() != 0 || nodes[i].children_depth != 0) {
+				oldnew[i] = tosave.size();
+				tosave.push_back(nodes[i]);
 			}
 		}
-		nodes = tosave;
+
+		nodes.swap(tosave);
+		for (size_t i=0 ; i<nodes.size() ; ++i) {
+			nodes[i].parent = oldnew[nodes[i].parent];
+			for (size_t c=0 ; c<nodes[i].children.size() ; ++c) {
+				nodes[i].children[c].second = oldnew[nodes[i].children[c].second];
+			}
+		}
+		for (size_t c=0 ; c<children.size() ; ++c) {
+			children[c].second = oldnew[children[c].second];
+		}
 		std::cerr << std::endl;
 	}
-	//*/
 };
 
 }
