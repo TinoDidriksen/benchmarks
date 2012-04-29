@@ -240,7 +240,7 @@ public:
 	void serialize(std::ostream& out) const {
 		const char *trie = "TRIE";
 		out.write(trie, 4);
-		size_t z = sizeof(typename String::value_type);
+		uint8_t z = sizeof(typename String::value_type);
 		out.write(reinterpret_cast<const char*>(&z), sizeof(z));
 
 		out.write(reinterpret_cast<const char*>(&compressed), sizeof(compressed));
@@ -279,14 +279,15 @@ public:
 			throw -1;
 		}
 
-		size_t z;
-		in.read(reinterpret_cast<char*>(&z), sizeof(z));
-		if (z != sizeof(typename String::value_type)) {
+		uint8_t s;
+		in.read(reinterpret_cast<char*>(&s), sizeof(s));
+		if (s != sizeof(typename String::value_type)) {
 			throw -1;
 		}
 
 		in.read(reinterpret_cast<char*>(&compressed), sizeof(compressed));
 
+		size_t z;
 		in.read(reinterpret_cast<char*>(&z), sizeof(z));
 		nodes.resize(z);
 		for (size_t n=0 ; n<z ; ++n) {
@@ -304,7 +305,7 @@ public:
 			for (size_t c=0 ; c<nodes[n].children.size() ; ++c) {
 				in.read(reinterpret_cast<char*>(&nodes[n].children[c].second), sizeof(nodes[n].children[c].second));
 				nodes[n].children[c].first = nodes[nodes[n].children[c].second].self;
-				nodes[nodes[n].children[c].second].parent = n;
+				nodes[nodes[n].children[c].second].parent = static_cast<Count>(n);
 			}
 		}
 
