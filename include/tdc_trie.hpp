@@ -1,5 +1,6 @@
 /*
-* Copyright 2012 Tino Didriksen <tino@didriksen.cc>
+* Copyright 2012 Tino Didriksen <mail@tinodidriksen.com>
+* Public Domain, but please submit patches so everyone can benefit
 * http://tinodidriksen.com/
 */
 
