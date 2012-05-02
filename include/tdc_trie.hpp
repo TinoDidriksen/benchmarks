@@ -15,9 +15,6 @@ References:
 
 #include <stdint.h>
 #include <map>
-#include <string>
-#include <deque>
-#include <list>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -37,6 +34,55 @@ struct trie_serializer {
 		return value;
 	}
 };
+
+//*
+template<typename T, typename Y>
+typename T::iterator findchild(T& t, const Y& y) {
+	typename T::iterator it, first = t.begin();
+	size_t count = t.size(), step;
+ 
+	while (count > 0) {
+		it = first;
+		step = count / 2;
+		it += step;
+		if (it->first < y) {
+			first = ++it;
+			count -= step + 1;
+		}
+		else {
+			count = step;
+		}
+	}
+	if (first != t.end() && first->first != y) {
+		first = t.end();
+	}
+	return first;
+}
+
+template<typename T, typename Y>
+typename T::const_iterator findchild(const T& t, const Y& y) {
+	typename T::const_iterator it, first = t.begin();
+	size_t count = t.size(), step;
+ 
+	while (count > 0) {
+		it = first;
+		step = count / 2;
+		it += step;
+		if (it->first < y) {
+			first = ++it;
+			count -= step + 1;
+		}
+		else {
+			count = step;
+		}
+	}
+	if (first != t.end() && first->first != y) {
+		first = t.end();
+	}
+	return first;
+}
+
+/*/
 
 template<typename T, typename Y>
 typename T::iterator findchild(T& t, const Y& y) {
@@ -59,6 +105,7 @@ typename T::const_iterator findchild(const T& t, const Y& y) {
 	}
 	return it;
 }
+//*/
 
 template<typename T, typename Y>
 void insertchild(T& t, const Y& y) {
@@ -232,6 +279,63 @@ private:
 	children_type children;
 
 public:
+	class const_iterator {
+	private:
+		friend class trie;
+		const trie *owner;
+		Count n;
+
+		void getHelper(String& rv, Count n) const {
+			if (owner->nodes[n].parent != std::numeric_limits<Count>::max()) {
+				getHelper(rv, owner->nodes[n].parent);
+			}
+			rv.push_back(owner->nodes[n].self);
+		}
+
+	public:
+		const_iterator() :
+		owner(0),
+		n(Count())
+		{
+		}
+
+		const_iterator(const trie *owner, Count n) :
+		owner(owner),
+		n(n)
+		{
+			if (owner && n < owner->nodes.size() && !owner->nodes[n].terminal) {
+				operator++();
+			}
+		}
+
+		String operator*() const {
+			String rv;
+			if (owner && n < owner->nodes.size()) {
+				getHelper(rv, n);
+			}
+			return rv;
+		}
+
+		bool operator==(const const_iterator& o) const {
+			return owner == o.owner && n == o.n;
+		}
+
+		bool operator!=(const const_iterator& o) const {
+			return !(*this == o);
+		}
+
+		const_iterator& operator++() {
+			for (++n ; n<owner->nodes.size() ; ++n) {
+				if (owner->nodes[n].terminal) {
+					break;
+				}
+			}
+			return *this;
+		}
+	};
+
+	friend class const_iterator;
+
 	typedef std::map<String,size_t> query_type;
 
 	trie() : compressed(false) {
@@ -331,6 +435,14 @@ public:
 		children.clear();
 	}
 
+	const_iterator begin() const {
+		return const_iterator(this, 0);
+	}
+
+	const_iterator end() const {
+		return const_iterator(this, static_cast<Count>(nodes.size()));
+	}
+
 	bool add(const String& entry) {
 		if (entry.empty()) {
 			return false;
@@ -349,6 +461,10 @@ public:
 		nodes.back() = node_type(std::numeric_limits<Count>::max(), entry[0]);
 		nodes.back().add(*this, entry, 1, 1);
 		return true;
+	}
+
+	void insert(const String& entry) {
+		add(entry);
 	}
 
 	query_type query(const String& entry, size_t maxdist = 0) const {
@@ -376,6 +492,37 @@ public:
 			}
 		}
 		return matches;
+	}
+
+	const_iterator find(const String& entry) const {
+		const_iterator rv(this, static_cast<Count>(nodes.size()));
+		typename children_type::const_iterator child = findchild(children, entry[0]);
+		if (child != children.end()) {
+			rv.n = child->second;
+			for (size_t i=1 ; i<entry.size() ; ++i) {
+				Count second = child->second;
+				child = findchild(nodes[second].children, entry[i]);
+				if (child == nodes[second].children.end()) {
+					rv.n = static_cast<Count>(nodes.size());
+					break;
+				}
+				rv.n = child->second;
+			}
+			if (rv.n < nodes.size() && nodes[rv.n].terminal == false) {
+				rv.n = static_cast<Count>(nodes.size());
+			}
+		}
+		return rv;
+	}
+
+	void erase(const String& entry) {
+		if (compressed) {
+			return;
+		}
+		const_iterator it = find(entry);
+		if (it.n != nodes.size()) {
+			nodes[it.n].terminal = false;
+		}
 	}
 
 	void compress() {
@@ -419,7 +566,7 @@ public:
 						continue;
 					}
 
-					findchild(nodes[second->parent].children, first->self)->second = first - &nodes[0];
+					findchild(nodes[second->parent].children, first->self)->second = static_cast<Count>(first - &nodes[0]);
 					second->parent = std::numeric_limits<Count>::max();
 					second->self = typename String::value_type();
 					second->children.clear();
@@ -440,15 +587,15 @@ public:
 			}
 		}
 
-		std::map<size_t,size_t> oldnew;
+		std::map<Count,Count> oldnew;
 		oldnew[std::numeric_limits<Count>::max()] = std::numeric_limits<Count>::max();
 		node_container_type tosave;
 		tosave.reserve(nodes.size()-removed);
 
-		for (size_t i=0 ; i<nodes.size() ; ++i) {
+		for (Count i=0 ; i<nodes.size() ; ++i) {
 			if (nodes[i].parent != std::numeric_limits<Count>::max() || nodes[i].self != typename String::value_type()
 				|| nodes[i].children.size() != 0 || nodes[i].children_depth != 0) {
-				oldnew[i] = tosave.size();
+				oldnew[i] = static_cast<Count>(tosave.size());
 				tosave.push_back(nodes[i]);
 			}
 		}

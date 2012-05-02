@@ -40,6 +40,7 @@
 #include <sorted_vector.hpp>
 #include <interval_vector.hpp>
 #include <sorted_deque.hpp>
+#include <tdc_trie.hpp>
 #include <cycle.h>
 #ifdef _MSC_VER
     #include <sti/sset.h>
@@ -155,6 +156,7 @@ int main() {
     //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector", strings); // only makes sense for integers
     runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector", strings);
     runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
+    runTest< tdc::trie<std::string> >("tdc::trie", strings);
 #ifdef _MSC_VER
     runTest< sti::sset<std::string> >("sti::sset", strings);
 #endif
