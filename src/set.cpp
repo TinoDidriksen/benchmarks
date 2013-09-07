@@ -36,12 +36,15 @@
 
 #include <set>
 #include <boost/unordered_set.hpp>
+#include <boost/container/flat_set.hpp>
 #include <unordered_set>
 #include <sorted_vector.hpp>
 #include <interval_vector.hpp>
 #include <sorted_deque.hpp>
 #include <tdc_trie.hpp>
 #include <cycle.h>
+#include <btree_set.h>
+#include <safe_btree_set.h>
 #ifdef _MSC_VER
     #include <sti/sset.h>
 #endif
@@ -142,9 +145,12 @@ int main() {
     runTest< std::set<uint32_t> >("std::set", numbers);
     runTest< std::unordered_set<uint32_t> >("std::unordered_set", numbers);
     runTest< boost::unordered_set<uint32_t> >("boost::unordered_set", numbers);
+	runTest< boost::container::flat_set<uint32_t> >("boost::container::flat_set", numbers);
     runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector", numbers);
     runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector", numbers);
-    runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque", numbers);
+    //runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque", numbers);
+    runTest< btree::btree_set<uint32_t> >("btree::btree_set", numbers);
+    //runTest< btree::safe_btree_set<uint32_t> >("btree::safe_btree_set", numbers);
 #ifdef _MSC_VER
     runTest< sti::sset<uint32_t> >("sti::sset", numbers);
 #endif
@@ -153,10 +159,13 @@ int main() {
     runTest< std::set<std::string> >("std::set", strings);
     runTest< std::unordered_set<std::string> >("std::unordered_set", strings);
     runTest< boost::unordered_set<std::string> >("boost::unordered_set", strings);
+	runTest< boost::container::flat_set<std::string> >("boost::container::flat_set", strings);
     //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector", strings); // only makes sense for integers
     runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector", strings);
-    runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
+    //runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
     runTest< tdc::trie<std::string> >("tdc::trie", strings);
+    runTest< btree::btree_set<std::string> >("btree::btree_set", strings);
+    //runTest< btree::safe_btree_set<std::string> >("btree::safe_btree_set", strings);
 #ifdef _MSC_VER
     runTest< sti::sset<std::string> >("sti::sset", strings);
 #endif
