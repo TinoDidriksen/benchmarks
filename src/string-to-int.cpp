@@ -36,7 +36,7 @@
 #include <iomanip>
 #include <sstream>
 
-static const size_t N = 100000;
+static const int N = 100000;
 static const size_t R = 7;
 
 int naive(const char *p) {
