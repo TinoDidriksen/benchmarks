@@ -1,35 +1,35 @@
 # Boost
-SET(Boost_ADDITIONAL_VERSIONS "1.49" "1.49.0")
-FIND_PATH(Boost_LOCAL NAMES boost/config.hpp PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../include" NO_DEFAULT_PATH)
-if (Boost_LOCAL)
-	SET(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../include")
+find_path(Boost_LOCAL NAMES boost/config.hpp PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../include" NO_DEFAULT_PATH)
+if(Boost_LOCAL)
+	set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 	find_package(Boost 1.49.0)
 endif()
-if (NOT Boost_FOUND)
+if(NOT Boost_FOUND)
+	unset(BOOST_ROOT)
 	message(STATUS "Did not find Boost locally; trying globally...")
-	message(STATUS "If this doesn't work, set envvar BOOST_ROOT or run ./get-boost.sh and try again.")
+	message(STATUS "If this doesn't work, run ./get-boost.sh and try again.")
 	find_package(Boost 1.49.0 REQUIRED)
 endif()
-if(Boost_FOUND)
-	if (Boost_VERSION VERSION_LESS "104900")
-		unset(Boost_FOUND CACHE)
-		unset(Boost_INCLUDE_DIRS CACHE)
-		unset(Boost_LIBRARIES CACHE)
-		message(FATAL_ERROR "Boost is too old - ${Boost_VERSION} was found, but benchmarks requires 1.49.0 or newer")
-	endif ()
-	include_directories(${Boost_INCLUDE_DIRS})
-	link_directories(${Boost_LIBRARY_DIRS})
-	add_definitions(-DHAVE_BOOST=1)
-	message(STATUS "Found Boost version ${Boost_VERSION}")
-endif()
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
-macro(benchmarks_link target)
-	target_link_libraries(${target} ${Boost_LIBRARIES})
-endmacro()
+set(SHARED_HS
+	../include/cycle.h
+	../include/helpers.hpp
+	)
 
-ADD_EXECUTABLE(set set.cpp)
-benchmarks_link(set)
+ADD_EXECUTABLE(set
+	set.cpp
+	${SHARED_HS}
+	../include/btree_set.h
+	../include/safe_btree_set.h
+	../include/interval_vector.hpp
+	../include/sorted_deque.hpp
+	../include/sorted_vector.hpp
+	../include/tdc_trie.hpp
+	../include/sti/sset.h
+	)
+
 ADD_EXECUTABLE(vector-realloc vector-realloc.cpp)
-benchmarks_link(vector-realloc)
-ADD_EXECUTABLE(dynamic-cast dynamic-cast.cpp)
-benchmarks_link(dynamic-cast)
+
+ADD_EXECUTABLE(dynamic-cast dynamic-cast.cpp ${SHARED_HS})

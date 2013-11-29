@@ -18,14 +18,6 @@
 * along with Benchmarks.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef _MSC_VER
-    #define _SECURE_SCL 0
-    #define _CRT_SECURE_NO_DEPRECATE 1
-    #define WIN32_LEAN_AND_MEAN
-    #define VC_EXTRALEAN
-    #define NOMINMAX
-#endif
-
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
@@ -148,7 +140,7 @@ int main() {
     runTest< std::set<uint32_t> >("std::set", numbers);
     runTest< std::unordered_set<uint32_t> >("std::unordered_set", numbers);
     runTest< boost::unordered_set<uint32_t> >("boost::unordered_set", numbers);
-    runTest< boost::container::flat_set<uint32_t> >("boost::container::flat_set", numbers);
+    //runTest< boost::container::flat_set<uint32_t> >("boost::container::flat_set", numbers); // Broken Boost 1.55.0 vs. VS12?
     runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector", numbers);
     runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector", numbers);
     //runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque", numbers);
@@ -162,7 +154,7 @@ int main() {
     runTest< std::set<std::string> >("std::set", strings);
     runTest< std::unordered_set<std::string> >("std::unordered_set", strings);
     runTest< boost::unordered_set<std::string> >("boost::unordered_set", strings);
-    runTest< boost::container::flat_set<std::string> >("boost::container::flat_set", strings);
+	//runTest< boost::container::flat_set<std::string> >("boost::container::flat_set", strings); // Broken Boost 1.55.0 vs. VS12?
     //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector", strings); // only makes sense for integers
     runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector", strings);
     //runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
