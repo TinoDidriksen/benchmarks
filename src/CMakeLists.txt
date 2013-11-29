@@ -35,3 +35,5 @@ ADD_EXECUTABLE(vector-realloc vector-realloc.cpp)
 ADD_EXECUTABLE(dynamic-cast dynamic-cast.cpp ${SHARED_HS})
 
 ADD_EXECUTABLE(string-to-double string-to-double.cpp ${SHARED_HS})
+
+ADD_EXECUTABLE(string-to-int string-to-int.cpp ${SHARED_HS})
