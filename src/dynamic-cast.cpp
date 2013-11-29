@@ -18,6 +18,9 @@
 * along with Benchmarks.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cycle.h>
+#include <helpers.hpp>
+
 #include <cstdlib>
 #include <cstdint>
 #include <cmath>
@@ -26,8 +29,6 @@
 #include <limits>
 #include <vector>
 #include <iomanip>
-#include <cycle.h>
-#include <helpers.hpp>
 
 const size_t N = 1000000;
 const size_t R = 7;

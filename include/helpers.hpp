@@ -21,6 +21,7 @@
 #pragma once
 #ifndef c6d28b7452ec699b_HELPERS_HPP
 #define c6d28b7452ec699b_HELPERS_HPP
+#include <stdint.h>
 #include <cmath>
 #include <iostream>
 #include <algorithm>

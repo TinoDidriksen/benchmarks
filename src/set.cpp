@@ -18,28 +18,29 @@
 * along with Benchmarks.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cycle.h>
+#include <helpers.hpp>
+
+#include <boost/unordered_set.hpp>
+#include <boost/container/flat_set.hpp>
+#include <sorted_vector.hpp>
+#include <interval_vector.hpp>
+#include <sorted_deque.hpp>
+#include <tdc_trie.hpp>
+#include <btree_set.h>
+#include <safe_btree_set.h>
+#ifdef _MSC_VER
+    #include <sti/sset.h>
+#endif
+#include <set>
+#include <unordered_set>
+
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
-#include <helpers.hpp>
-
-#include <set>
-#include <boost/unordered_set.hpp>
-#include <boost/container/flat_set.hpp>
-#include <unordered_set>
-#include <sorted_vector.hpp>
-#include <interval_vector.hpp>
-#include <sorted_deque.hpp>
-#include <tdc_trie.hpp>
-#include <cycle.h>
-#include <btree_set.h>
-#include <safe_btree_set.h>
-#ifdef _MSC_VER
-    #include <sti/sset.h>
-#endif
 
 const size_t N = 1000000;
 const size_t R = 7;

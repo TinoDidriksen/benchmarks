@@ -49,4 +49,6 @@ int main() {
     
     std::cout << "realloc() reallocations: " << cnt_c << std::endl;
     std::cout << "std::vector reallocations: " << cnt_v << std::endl;
+
+	free(c);
 }
