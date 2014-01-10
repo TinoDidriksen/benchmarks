@@ -116,7 +116,8 @@ void runTest(const std::string& name, const VT& values) {
     timings[3][0] = PrintStats(timings[3]);
     std::cout << std::endl;
 
-    std::cout << name << "\t" << timings[0][0] << "\t" << timings[1][0] << "\t" << timings[2][0] << "\t" << timings[3][0] << std::endl;
+	std::cout << std::fixed << std::setprecision(0);
+	std::cout << name << "\t" << timings[0][0] << "\t" << timings[1][0] << "\t" << timings[2][0] << "\t" << timings[3][0] << std::endl;
 
     std::cout << std::endl;
 }
@@ -126,9 +127,7 @@ int main() {
     std::vector<uint32_t> numbers;
     std::vector<std::string> strings;
     std::ostringstream ss;
-    std::string tmp;
     for (size_t i=0 ; i<N ; ++i) {
-        tmp.clear();
         ss.clear();
         ss.str("");
         int rnd = rand() & 0x00003FFF;
@@ -141,7 +140,6 @@ int main() {
     runTest< std::set<uint32_t> >("std::set", numbers);
     runTest< std::unordered_set<uint32_t> >("std::unordered_set", numbers);
     runTest< boost::unordered_set<uint32_t> >("boost::unordered_set", numbers);
-    //runTest< boost::container::flat_set<uint32_t> >("boost::container::flat_set", numbers); // Broken Boost 1.55.0 vs. VS12?
     runTest< CG3::interval_vector<uint32_t> >("CG3::interval_vector", numbers);
     runTest< CG3::sorted_vector<uint32_t> >("CG3::sorted_vector", numbers);
     //runTest< CG3::sorted_deque<uint32_t> >("CG3::sorted_deque", numbers);
@@ -149,13 +147,14 @@ int main() {
     //runTest< btree::safe_btree_set<uint32_t> >("btree::safe_btree_set", numbers);
 #ifdef _MSC_VER
     runTest< sti::sset<uint32_t> >("sti::sset", numbers);
+#else
+	runTest< boost::container::flat_set<uint32_t> >("boost::container::flat_set", numbers); // Broken Boost 1.55.0 vs. VS12?
 #endif
 
     std::cout << "<std::string>\tInsert\tLookup\tIterate\tErase" << std::endl;
     runTest< std::set<std::string> >("std::set", strings);
     runTest< std::unordered_set<std::string> >("std::unordered_set", strings);
     runTest< boost::unordered_set<std::string> >("boost::unordered_set", strings);
-	//runTest< boost::container::flat_set<std::string> >("boost::container::flat_set", strings); // Broken Boost 1.55.0 vs. VS12?
     //runTest< CG3::interval_vector<std::string> >("CG3::interval_vector", strings); // only makes sense for integers
     runTest< CG3::sorted_vector<std::string> >("CG3::sorted_vector", strings);
     //runTest< CG3::sorted_deque<std::string> >("CG3::sorted_deque", strings);
@@ -164,5 +163,7 @@ int main() {
     //runTest< btree::safe_btree_set<std::string> >("btree::safe_btree_set", strings);
 #ifdef _MSC_VER
     runTest< sti::sset<std::string> >("sti::sset", strings);
+#else
+	runTest< boost::container::flat_set<std::string> >("boost::container::flat_set", strings); // Broken Boost 1.55.0 vs. VS12?
 #endif
 }
