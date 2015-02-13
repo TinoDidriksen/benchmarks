@@ -1,6 +1,5 @@
 /*
-* Copyright (C) 2012, Tino Didriksen Consult
-* Developed by Tino Didriksen <tino@didriksen.cc>
+* Copyright (C) 2015, Tino Didriksen <mail@tinodidriksen.com>
 *
 * This file is part of Benchmarks
 *

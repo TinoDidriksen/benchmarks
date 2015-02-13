@@ -37,3 +37,5 @@ ADD_EXECUTABLE(dynamic-cast dynamic-cast.cpp ${SHARED_HS})
 ADD_EXECUTABLE(string-to-double string-to-double.cpp ${SHARED_HS})
 
 ADD_EXECUTABLE(string-to-int string-to-int.cpp ${SHARED_HS})
+
+ADD_EXECUTABLE(read-whole-file read-whole-file.cpp ${SHARED_HS})
