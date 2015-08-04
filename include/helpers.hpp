@@ -21,6 +21,28 @@
 #pragma once
 #ifndef c6d28b7452ec699b_HELPERS_HPP
 #define c6d28b7452ec699b_HELPERS_HPP
+
+#ifdef _MSC_VER
+	// warning C4258: definition from the for loop is ignored; the definition from the enclosing scope is used
+	#pragma warning (disable: 4258)
+	#pragma conform(forScope, on)
+	// warning C4127: conditional expression is constant
+	#pragma warning (disable: 4127)
+	// warning C4428: universal-character-name encountered in source
+	#pragma warning (disable: 4428)
+	// warning C4512: assignment operator could not be generated
+	#pragma warning (disable: 4512)
+	// warning C4480: nonstandard extension used: specifying underlying type for enum
+	// 'cause that is actually standard in C++11
+	#pragma warning (disable: 4480)
+	// warning C4456: declaration hides previous local declaration
+	#pragma warning (disable: 4456)
+	// warning C4458: declaration hides class member
+	#pragma warning (disable: 4458)
+	// warning C4459: declaration hides global
+	#pragma warning (disable: 4459)
+#endif
+
 #include <stdint.h>
 #include <cmath>
 #include <iostream>

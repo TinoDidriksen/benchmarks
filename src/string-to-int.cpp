@@ -64,7 +64,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -85,7 +85,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -106,7 +106,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -127,7 +127,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -149,7 +149,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -172,13 +172,13 @@ int main() {
 	{
 		using boost::spirit::qi::int_;
 		using boost::spirit::qi::parse;
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
 			ticks start = getticks();
 			for (size_t i = 0; i < nums.size(); ++i) {
-				int x = 0.0;
+				int x = 0;
 				char const *str = nums[i].c_str();
 				parse(str, &str[nums[i].size()], int_, x);
 				tsum += x;
@@ -195,7 +195,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
@@ -218,7 +218,7 @@ int main() {
 	}
 
 	{
-		int tsum = 0.0;
+		int tsum = 0;
 		std::vector<double> timings;
 		timings.reserve(R);
 		for (size_t r = 0; r < R; ++r) {
