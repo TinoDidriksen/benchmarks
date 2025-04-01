@@ -23,10 +23,10 @@ ADD_EXECUTABLE(set
 	${SHARED_HS}
 	../include/btree_set.h
 	../include/safe_btree_set.h
-	../include/interval_vector.hpp
 	../include/sorted_deque.hpp
-	../include/sorted_vector.hpp
-	../include/tdc_trie.hpp
+	../include/cg3/src/interval_vector.hpp
+	../include/cg3/src/sorted_vector.hpp
+	../include/trie-tools/include/tdc_trie.hpp
 	../include/sti/sset.h
 	)
 

@@ -1,0 +1,6 @@
+[submodule "include/cg3"]
+	path = include/cg3
+	url = https://github.com/GrammarSoft/cg3
+[submodule "include/trie-tools"]
+	path = include/trie-tools
+	url = https://github.com/TinoDidriksen/trie-tools
